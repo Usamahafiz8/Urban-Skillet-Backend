@@ -1,13 +1,16 @@
-const SqureBaseURL = require('../Axios/squreUp')
-const ApiList = require('../apiList/index')
+const axios = require('axios');
+const squareAccessToken = process.env.SQUARE_ACCESS_TOKEN;
 
 const listLocations = async (req, res) => {
   try {
-    // You can now use req.squareAxios to make requests with the Square authorization header
-    const response = await req.squareAxios.get(`${SqureBaseURL}/${ApiList.listLocations}`);
+    const response = await axios.get('https://connect.squareupsandbox.com/v2/locations', {
+      headers: {
+        'Authorization': `Bearer ${squareAccessToken}`
+      }
+    });
     res.json(response.data);
   } catch (error) {
-  
+    console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };

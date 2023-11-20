@@ -16,7 +16,7 @@
  */
 const express = require('express');
 const router = express.Router();
-const locationsController = require('../contrllers/locationControler');
+const locationsController = require('../controlers/locationControler');
 
 // Define location routes
 router.get('/list', locationsController.listLocations);

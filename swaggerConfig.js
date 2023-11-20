@@ -9,7 +9,7 @@ const options = {
       description: 'API for managing locations',
     },
   },
-  apis: ['./routes/*.js'], // Adjust the path accordingly
+  apis: ['./routes/*.js'],
 };
 
 const specs = swaggerJsdoc(options);

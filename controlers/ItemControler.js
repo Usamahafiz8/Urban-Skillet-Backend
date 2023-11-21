@@ -94,8 +94,33 @@ const ItemModifier =  async (req, res )=>{
     }
 }
 
+const ItemTax = async (req, res) => {
+    const taxID = req.params.taxID;
+    const locationID = req.params.locationID; // Assuming you get the location ID from the request parameters
+
+    try {
+        const response = await SquareBaseURL.get(`/catalog/object/${taxID}`);
+        const taxData = response.data.object;
+
+        // Check if the tax is present at the specified location or at all locations
+        const isPresentAtLocation = taxData.present_at_all_locations || (taxData.present_at_location_ids && taxData.present_at_location_ids.includes(locationID));
+
+        if (isPresentAtLocation) {
+            res.json({ data: taxData });
+        } else {
+            res.status(404).json({ error: 'Tax not found at the specified location' });
+        }
+    } catch (error) {
+        console.error('Error fetching tax information:', error?.response?.data || error.message);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+
+
 module.exports = {
     PopularItems,
     ItemInformation,
-    ItemModifier
+    ItemModifier,
+    ItemTax
 };

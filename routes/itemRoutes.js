@@ -59,6 +59,31 @@
  *             example:
  *               id: '1'
  *               name: 'Catalog Item 1'
+ * @swagger
+ * /items/tax/{taxID}/{locationID}:
+ *   get:
+ *     summary: Get details of a tax for a specific location
+ *     parameters:
+ *       - in: path
+ *         name: taxID
+ *         required: true
+ *         description: ID of the tax to retrieve details
+ *         schema:
+ *           type: string
+ *       - in: path
+ *         name: locationID
+ *         required: true
+ *         description: ID of the location to filter tax
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: A successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               id: 'QLDJQJXLHN3CQH2VXEWYKAVW'
+ *               name: 'North Hollywood Sales tax'
  */
 const express = require('express');
 const router = express.Router();
@@ -69,5 +94,7 @@ const ItemsControler = require('../controlers/ItemControler');
 router.get('/Popular/:locationId', ItemsControler.PopularItems);
 router.get('/Detail/:itemId', ItemsControler.ItemInformation);
 router.get('/modifier/:modifierID', ItemsControler.ItemModifier);
+router.get('/tax/:taxID/:locationID', ItemsControler.ItemTax);
+
 
 module.exports = router;

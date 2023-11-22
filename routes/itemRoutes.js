@@ -21,8 +21,9 @@
  *                 item:
  *                   itemId: 'T2BL4DTZCTUVUD4BCIXND46U'
  *                   itemName: 'Burgar1'
- *  @swagger
- * /items/Detail/{itemId}:
+ * 
+ * @swagger
+ * /items/Detail/{itemId}/{locationId}:
  *   get:
  *     summary: Get details of a catalog item
  *     parameters:
@@ -32,46 +33,8 @@
  *         description: ID of the item to retrieve details
  *         schema:
  *           type: string
- *     responses:
- *       '200':
- *         description: A successful response
- *         content:
- *           application/json:
- *             example:
- *               id: '1'
- *               name: 'Catalog Item 1'
- *  @swagger
- * /items/modifier/{modifierID}:
- *   get:
- *     summary: Get details of a catalog item
- *     parameters:
  *       - in: path
- *         name: modifierID
- *         required: true
- *         description: ID of the item to retrieve details
- *         schema:
- *           type: string
- *     responses:
- *       '200':
- *         description: A successful response
- *         content:
- *           application/json:
- *             example:
- *               id: '1'
- *               name: 'Catalog Item 1'
- * @swagger
- * /items/tax/{taxID}/{locationID}:
- *   get:
- *     summary: Get details of a tax for a specific location
- *     parameters:
- *       - in: path
- *         name: taxID
- *         required: true
- *         description: ID of the tax to retrieve details
- *         schema:
- *           type: string
- *       - in: path
- *         name: locationID
+ *         name: locationId
  *         required: true
  *         description: ID of the location to filter tax
  *         schema:
@@ -82,19 +45,26 @@
  *         content:
  *           application/json:
  *             example:
- *               id: 'QLDJQJXLHN3CQH2VXEWYKAVW'
- *               name: 'North Hollywood Sales tax'
+ *               id: '1'
+ *               name: 'Catalog Item 1'
+ *               taxDetails: [
+ *                 {
+ *                   id: 'QLDJQJXLHN3CQH2VXEWYKAVW',
+ *                   name: 'North Hollywood Sales tax',
+ *                   isPresentAtLocation: false
+ *                 },
+ *                 // Additional tax details...
+ *               ]
  */
+
 const express = require('express');
 const router = express.Router();
 const ItemsControler = require('../controlers/ItemControler');
 
-
 // Define Routes 
 router.get('/Popular/:locationId', ItemsControler.PopularItems);
-router.get('/Detail/:itemId', ItemsControler.ItemInformation);
+router.get('/Detail/:itemId/:locationId', ItemsControler.ItemInformation);
 router.get('/modifier/:modifierID', ItemsControler.ItemModifier);
 router.get('/tax/:taxID/:locationID', ItemsControler.ItemTax);
-
 
 module.exports = router;

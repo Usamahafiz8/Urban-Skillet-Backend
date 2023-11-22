@@ -68,12 +68,53 @@ const PopularItems = async (req, res) => {
 };
 
 
+// const ItemInformation = async (req, res) => {
+//     const itemId = req.params.itemId;
+
+//     try {
+//         const response = await SquareBaseURL.get(`/catalog/object/${itemId}`);
+//         const itemData = response.data.object;
+//         res.json({ data: itemData });
+//     } catch (error) {
+//         console.error('Error fetching item information:', error?.response?.data || error.message);
+//         res.status(500).json({ error: 'Internal Server Error' });
+//     }
+// };
+
 const ItemInformation = async (req, res) => {
     const itemId = req.params.itemId;
+    const locationId = req.params.locationId; // Assuming you get the location ID from the request parameters
 
     try {
         const response = await SquareBaseURL.get(`/catalog/object/${itemId}`);
         const itemData = response.data.object;
+
+        // Fetch tax details for each tax ID associated with the item
+        const taxDetails = await Promise.all(itemData.item_data.tax_ids.map(async (taxId) => {
+            try {
+                const taxResponse = await SquareBaseURL.get(`/catalog/object/${taxId}`);
+                const taxData = taxResponse.data.object;
+
+                // Check if the tax is present at the specified location
+                if (taxData.present_at_all_locations || (taxData.present_at_location_ids && taxData.present_at_location_ids.includes(locationId))) {
+                    return {
+                        ...taxData,
+                    };
+                } else {
+                    return null; // Exclude tax details not present at the specified location
+                }
+            } catch (error) {
+                console.error(`Error fetching tax information for tax ID ${taxId}:`, error?.response?.data || error.message);
+                return null;
+            }
+        }));
+
+        // Remove null values from the taxDetails array
+        const filteredTaxDetails = taxDetails.filter(tax => tax !== null);
+
+        // Include filtered tax details in the item data
+        itemData.item_data.taxDetails = filteredTaxDetails;
+
         res.json({ data: itemData });
     } catch (error) {
         console.error('Error fetching item information:', error?.response?.data || error.message);

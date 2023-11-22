@@ -55,6 +55,29 @@
  *                 },
  *                 // Additional tax details...
  *               ]
+ * @swagger
+ * /items/modifier/{modifierID}:
+ *   get:
+ *     summary: Get the first item of each category for a given location
+ *     parameters:
+ *       - in: path
+ *         name: modifierID
+ *         required: true
+ *         description: ID of the location to filter items
+ *         schema:
+ *           type: string
+ *     responses:
+ *       '200':
+ *         description: A successful response
+ *         content:
+ *           application/json:
+ *             example:
+ *               - categoryId: 'TCSSX34YZ7DTVMPSOSEI6PTS'
+ *                 categoryName: 'Wings'
+ *                 item:
+ *                   itemId: 'T2BL4DTZCTUVUD4BCIXND46U'
+ *                   itemName: 'Burgar1'
+ * 
  */
 
 const express = require('express');
@@ -65,6 +88,6 @@ const ItemsControler = require('../controlers/ItemControler');
 router.get('/Popular/:locationId', ItemsControler.PopularItems);
 router.get('/Detail/:itemId/:locationId', ItemsControler.ItemInformation);
 router.get('/modifier/:modifierID', ItemsControler.ItemModifier);
-router.get('/tax/:taxID/:locationID', ItemsControler.ItemTax);
+
 
 module.exports = router;

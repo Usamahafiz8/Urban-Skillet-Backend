@@ -44,11 +44,13 @@
  *                     amount: 100
  *                     currency: 'USD'
  *                   scope: 'LINE_ITEM'
- *     responses:
- *       '200':
- *         description: A successful response
- *         content:
- *           application/json:
+*     responses:
+ *       200:
+ *         description: Successful order creation
+ *       400:
+ *         description: Bad request
+ *       500:
+ *         description: Internal server error
  *             
  */
 

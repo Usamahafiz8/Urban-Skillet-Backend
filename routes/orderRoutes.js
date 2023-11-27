@@ -1,15 +1,13 @@
 /**
  * @swagger
-
  * /orders/create:
  *   post:
- *     summary: Create a new order
+ *     summary: Create a new order and process payment
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           example:
- *             idempotency_key: '8193148c-9586-11e6-99f9-28cfe92138cf'
  *             order:
  *               reference_id: 'my-order-001'
  *               location_id: '057P5VYJ4A5X1'
@@ -44,14 +42,15 @@
  *                     amount: 100
  *                     currency: 'USD'
  *                   scope: 'LINE_ITEM'
-*     responses:
+ *             sourceID: 'your-source-id'  
+ *             amount: 2000  
+ *     responses:
  *       200:
- *         description: Successful order creation
+ *         description: Successful order creation and payment processing
  *       400:
  *         description: Bad request
  *       500:
  *         description: Internal server error
- *             
  */
 
 const express = require('express');
@@ -59,7 +58,6 @@ const router = express.Router();
 const ordersController = require('../controlers/orderControler');
 
 
-// Define order route
-router.post('/create', ordersController.createOrder);
+router.post('/create', ordersController.createOrderAndProcessPayment);
 
 module.exports = router;

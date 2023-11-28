@@ -1,7 +1,8 @@
 const SquareBaseURL = require("../apiConstrains/apiList");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
-const Customer = require('../models/customerSchema'); // Adjust the import based on your actual model
+const Customer = require('../models/customerSchema'); 
+const { sendVerificationEmail } = require("../common/emailService");
 
 const createCustomer = async (req, res) => {
   try {
@@ -67,6 +68,9 @@ const createCustomer = async (req, res) => {
 
 
 
+
+
+
 const customerLogin = async (req, res) => {
   try {
     const { identifier, password } = req.body;
@@ -109,7 +113,6 @@ const customerLogin = async (req, res) => {
 
     res.status(200).json(customerDetails);
   } catch (error) {
-    console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 };

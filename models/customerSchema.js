@@ -9,7 +9,7 @@ const customerSchema = new mongoose.Schema({
   emailAddress: { type: String, required: true },
   phoneNumber: { type: String, required: true },
   companyName: { type: String, default: '' },
-  password: { type: String, required: true }, // Add the password field
+  password: { type: String, required: true },
 });
 
 const Customer = mongoose.model('Customer', customerSchema);

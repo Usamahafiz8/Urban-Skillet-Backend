@@ -10,6 +10,8 @@ const customerSchema = new mongoose.Schema({
   phoneNumber: { type: String, required: true },
   companyName: { type: String, default: '' },
   password: { type: String, required: true },
+  verificationCode: { type: String, default: null },  
+  verificationCodeExpiresAt: { type: Date, default: null },  
 });
 
 const Customer = mongoose.model('Customer', customerSchema);

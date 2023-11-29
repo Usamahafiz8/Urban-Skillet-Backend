@@ -39,7 +39,7 @@ const forgotPasswordInitiate = async (req, res) => {
       Date.now() + 600 * 1000
     ); // Set expiration to one minute from now
     await existingCustomer.save();
-    console.log(existingCustomer);
+    
     // Schedule the deletion of the verification code after one minute
     setTimeout(async () => {
       existingCustomer.verificationCode = undefined;
@@ -72,12 +72,9 @@ const forgotPasswordComplete = async (req, res) => {
     const existingCustomer = await Customer.findOne({
       emailAddress: email_address,
     });
-    console.log(existingCustomer);
     if (!existingCustomer) {
       return res.status(404).json({ error: "Customer not found" });
     }
-    console.log(verificationCode, "given");
-    console.log(existingCustomer.verificationCode, "given");
     // Check if the verification code matches
     if (existingCustomer.verificationCode !== verificationCode) {
       return res.status(400).json({ error: "Invalid verification code" });
@@ -112,12 +109,10 @@ const VarifyOTP = async (req, res) => {
       const existingCustomer = await Customer.findOne({
         emailAddress: email_address,
       });
-      console.log(existingCustomer);
+      
       if (!existingCustomer) {
         return res.status(404).json({ error: "Customer not found" });
       }
-      console.log(verificationCode, "given");
-      console.log(existingCustomer.verificationCode, "given");
       // Check if the verification code matches
       if (existingCustomer.verificationCode !== verificationCode) {
         return res.status(400).json({ error: "Invalid verification code" });

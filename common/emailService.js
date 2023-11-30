@@ -6,8 +6,8 @@ const nodemailer = require("nodemailer");
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "rapidev.softwares@gmail.com", 
-    pass: "xfcljbvpghqzabnw", 
+    user: "rapidevgames@gmail.com", 
+    pass: "pxqoqtnkhrgkstpk", 
   },    
 });
 // EMAIL_PASSWORD=xfcljbvpghqzabnw

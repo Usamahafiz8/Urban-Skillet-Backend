@@ -1,12 +1,13 @@
-const SquareBaseURL = require("../apiConstrains/apiList");
+const mongoose = require("mongoose");
+const crypto = require("crypto");
 const axios = require("axios");
 const bcrypt = require("bcrypt");
 const Customer = require("../models/customerSchema");
 const { sendVerificationEmail } = require("../common/emailService");
+const SquareBaseURL = require("../apiConstrains/apiList");
 
 const createCustomer = async (req, res) => {
   try {
-    // Extract customer data from the request body
     const {
       given_name,
       family_name,
@@ -22,156 +23,97 @@ const createCustomer = async (req, res) => {
 
     // If a customer with the provided email or phone number exists, log them in
     if (existingCustomer) {
-      return res.status(200).json({ message: "Customer already exists. Log in instead." });
+      return res.status(200).json({
+        message: "Customer already exists. Log in instead.",
+      });
     }
 
     // Hash the password
-    const hashedPassword = await bcrypt.hash(password, 10); // Adjust the saltRounds as needed
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Make a request to Square Up API to create a customer
+    // Generate verification code
+    const verificationCode = crypto
+      .randomBytes(3)
+      .toString("hex")
+      .toUpperCase();
+    const verificationCodeExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    // Save the customer data into the MongoDB database with the hashed password
+    const savedCustomer = await Customer.create({
+      givenName: given_name,
+      familyName: family_name || "",
+      emailAddress: email_address,
+      phoneNumber: phone_number,
+      companyName: "",
+      password: hashedPassword,
+      verificationCode,
+      verificationCodeExpiresAt,
+    });
+
+    // Send verification email
+    await sendVerificationEmail(savedCustomer.emailAddress, verificationCode);
+
+    res.status(201).json({
+      message: "Customer created. Check your email for verification.",
+    });
+  } catch (error) {
+    console.error("Error:", error);
+
+    if (error.response) {
+      console.error("Square API Error Response:", error.response.data);
+      res.status(500).json({
+        error: "Internal Server Error",
+        details: error.response.data.errors,
+      });
+    } else {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+};
+
+const verifyCustomer = async (req, res) => {
+  try {
+    const { email, verificationCode } = req.body;
+
+    // Find the customer by email address and verification code
+    const customer = await Customer.findOne({
+      emailAddress: email,
+      verificationCode,
+      verificationCodeExpiresAt: { $gt: new Date() },
+    });
+
+    if (!customer) {
+      return res.status(400).json({ error: "Invalid verification code or email" });
+    }
+
+    // Mark the customer as verified
+    customer.isVerified = true;
+    customer.verificationCode = null;
+    customer.verificationCodeExpiresAt = null;
+    await customer.save();
+
+    // Now, you can create the customer in the Square app using the customer data
     const squareApiResponse = await SquareBaseURL.post("/customers", {
-      given_name,
-      family_name,
-      email_address,
-      phone_number,
+      given_name: customer.givenName,
+      family_name: customer.familyName || "",
+      email_address: customer.emailAddress,
+      phone_number: customer.phoneNumber,
     });
 
     // Extract relevant data from the Square API response
     const squareCustomerData = squareApiResponse.data.customer;
 
-    // Save the customer data into the MongoDB database with the hashed password
-    const savedCustomer = await Customer.create({
-      customerSquareId: squareCustomerData.id,
-      createdAt: squareCustomerData.created_at,
-      updatedAt: squareCustomerData.updated_at,
-      givenName: squareCustomerData.given_name,
-      familyName: squareCustomerData.family_name || '',
-      emailAddress: squareCustomerData.email_address,
-      phoneNumber: squareCustomerData.phone_number,
-      companyName: squareCustomerData.company_name || '',
-      password: hashedPassword,
-    });
+    // Update the customerSquareId in the local database
+    customer.customerSquareId = squareCustomerData.id;
+    await customer.save();
 
-    // Handle the Square Up API response and the saved customer data as needed
-    res.status(201).json(savedCustomer);
+    res.status(200).json({ message: "Customer verified successfully." });
   } catch (error) {
     console.error("Error:", error);
-
-    // Log the Square API response in case of an error
-    if (error.response) {
-      console.error("Square API Error Response:", error.response.data);
-    }
-
-    res.status(500).json({ error: "Internal Server Error", details: error.response.data.errors });
+    res.status(500).json({ error: "Internal Server Error", details: error.message });
   }
 };
 
-// const createCustomerWithVerification = async (req, res) => {
-//   try {
-//     const { email_address, phone_number } = req.body;
-
-//     // Check if a customer with the provided email or phone number already exists
-//     const existingCustomer = await Customer.findOne({
-//       $or: [{ emailAddress: email_address }, { phoneNumber: phone_number }],
-//     });
-
-//     if (existingCustomer) {
-//       return res
-//         .status(200)
-//         .json({ message: "Customer already exists. Log in instead." });
-//     }
-
-//     // Generate a verification code
-//     const verificationCode = Math.floor(100000 + Math.random() * 900000);
-
-//     // Send the verification code to the customer's email
-//     await sendVerificationEmail(email_address, verificationCode);
-
-//     // Return a response indicating that the verification email has been sent
-//     res
-//       .status(200)
-//       .json({
-//         message: "Verification email sent. Check your email for the code.",
-//       });
-//   } catch (error) {
-//     console.error("Error:", error);
-
-//     res
-//       .status(500)
-//       .json({ error: "Internal Server Error", details: error.message });
-//   }
-// };
-
-// const verifyAndCreateCustomer = async (req, res) => {
-//   try {
-//     const {
-//       given_name,
-//       family_name,
-//       email_address,
-//       phone_number,
-//       password,
-//       verificationCode,
-//     } = req.body;
-
-//     // Find the customer by email address
-//     const existingCustomer = await Customer.findOne({
-//       emailAddress: email_address,
-//     });
-
-//     if (!existingCustomer) {
-//       return res.status(404).json({ error: "Customer not found" });
-//     }
-
-//     // Check if the verification code matches
-//     if (existingCustomer.verificationCode !== verificationCode) {
-//       return res.status(400).json({ error: "Invalid verification code" });
-//     }
-
-//     // Hash the password
-//     const hashedPassword = await bcrypt.hash(password, 10);
-
-//     const squareApiResponse = await SquareBaseURL.post("/customers", {
-//       given_name,
-//       family_name,
-//       email_address,
-//       phone_number,
-//     });
-
-//     const squareCustomerData = squareApiResponse.data.customer;
-
-//     // Save the customer data into the MongoDB database with the hashed password
-//     const savedCustomer = await Customer.create({
-//       customerSquareId: squareCustomerData.id,
-//       createdAt: squareCustomerData.created_at,
-//       updatedAt: squareCustomerData.updated_at,
-//       givenName: squareCustomerData.given_name,
-//       familyName: squareCustomerData.family_name || "",
-//       emailAddress: squareCustomerData.email_address,
-//       phoneNumber: squareCustomerData.phone_number,
-//       companyName: squareCustomerData.company_name || "",
-//       password: hashedPassword,
-//     });
-
-//     // Clear the verification code after successful registration
-//     existingCustomer.verificationCode = undefined;
-//     await existingCustomer.save();
-
-//     res.status(201).json({ message: "Customer created successfully." });
-//   } catch (error) {
-//     console.error("Error:", error);
-
-//     if (error.response) {
-//       console.error("Square API Error Response:", error.response.data);
-//     }
-
-//     res
-//       .status(500)
-//       .json({
-//         error: "Internal Server Error",
-//         details: error.response?.data?.errors,
-//       });
-//   }
-// };
 
 const customerLogin = async (req, res) => {
   try {
@@ -227,10 +169,8 @@ const customerLogin = async (req, res) => {
   }
 };
 
-
 module.exports = {
-  customerLogin,
   createCustomer,
-  // createCustomerWithVerification,
-  // verifyAndCreateCustomer,
+  verifyCustomer,
+  customerLogin,
 };

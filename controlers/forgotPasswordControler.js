@@ -36,23 +36,21 @@ const forgotPasswordInitiate = async (req, res) => {
     // Save the verification code and its expiration time in the database
     existingCustomer.verificationCode = verificationCode;
     existingCustomer.verificationCodeExpiresAt = new Date(
-      Date.now() + 600 * 1000
+      Date.now() + 60 * 10 * 1000
     ); // Set expiration to one minute from now
     await existingCustomer.save();
-    
+console.log(existingCustomer.verificationCode);
     // Schedule the deletion of the verification code after one minute
     setTimeout(async () => {
       existingCustomer.verificationCode = undefined;
       existingCustomer.verificationCodeExpiresAt = undefined;
       await existingCustomer.save();
-    }, 60 * 1000);
+    }, 60 * 10 * 1000);
 
     // Return a response indicating that the verification email has been sent
-    res
-      .status(200)
-      .json({
-        message: "Verification email sent. Check your email for the code.",
-      });
+    res.status(200).json({
+      message: "Verification email sent. Check your email for the code.",
+    });
   } catch (error) {
     console.error("Error:", error);
     res
@@ -102,39 +100,35 @@ const forgotPasswordComplete = async (req, res) => {
  * Controller for verifying the OTP and updating the password
  */
 const VarifyOTP = async (req, res) => {
-    try {
-      const { email_address, verificationCode } = req.body;
-  
-      // Find the customer by email address
-      const existingCustomer = await Customer.findOne({
-        emailAddress: email_address,
-      });
-      
-      if (!existingCustomer) {
-        return res.status(404).json({ error: "Customer not found" });
-      }
-      // Check if the verification code matches
-      if (existingCustomer.verificationCode !== verificationCode) {
-        return res.status(400).json({ error: "Invalid verification code" });
-      }
-  
+  try {
+    const { email_address, verificationCode } = req.body;
 
+    // Find the customer by email address
+    const existingCustomer = await Customer.findOne({
+      emailAddress: email_address,
+    });
 
-      // Clear the verification code after successful password update
-      existingCustomer.verificationCode = undefined;
-      await existingCustomer.save();
-  
-      res.status(200).json({ message: "Verification code" });
-    } catch (error) {
-      console.error("Error:", error);
-      res
-        .status(500)
-        .json({ error: "Internal Server Error", details: error.message });
+    if (!existingCustomer) {
+      return res.status(404).json({ error: "Customer not found" });
     }
-  };
+    // Check if the verification code matches
+    if (existingCustomer.verificationCode !== verificationCode) {
+      return res.status(400).json({ error: "Invalid verification code" });
+    }
+
+    
+
+    res.status(200).json({ message: "Verification code" });
+  } catch (error) {
+    console.error("Error:", error);
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
+  }
+};
 
 module.exports = {
   forgotPasswordInitiate,
   forgotPasswordComplete,
-  VarifyOTP
+  VarifyOTP,
 };

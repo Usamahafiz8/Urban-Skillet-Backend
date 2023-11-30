@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const customerSchema = new mongoose.Schema({
-  customerSquareId: { type: String, required: true },
-  createdAt: { type: Date, required: true },
-  updatedAt: { type: Date, required: true },
+  customerSquareId: { type: String, default: null }, 
+  createdAt: { type: Date, default: Date.now },  
+  updatedAt: { type: Date, default: Date.now },  
   givenName: { type: String, required: true },
   familyName: { type: String, default: '' },
   emailAddress: { type: String, required: true },

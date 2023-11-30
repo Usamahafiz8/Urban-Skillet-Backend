@@ -25,6 +25,7 @@ const createCustomer = async (req, res) => {
     if (existingCustomer) {
       return res.status(200).json({
         message: "Customer already exists. Log in instead.",
+        type:"failure"
       });
     }
 
@@ -55,6 +56,7 @@ const createCustomer = async (req, res) => {
 
     res.status(201).json({
       message: "Customer created. Check your email for verification.",
+      type:"Success"
     });
   } catch (error) {
     console.error("Error:", error);
@@ -83,7 +85,7 @@ const verifyCustomer = async (req, res) => {
     });
 
     if (!customer) {
-      return res.status(400).json({ error: "Invalid verification code or email" });
+      return res.status(400).json({ error: "Invalid verification code or email", type:"failure" });
     }
 
     // Mark the customer as verified
@@ -107,7 +109,7 @@ const verifyCustomer = async (req, res) => {
     customer.customerSquareId = squareCustomerData.id;
     await customer.save();
 
-    res.status(200).json({ message: "Customer verified successfully." });
+    res.status(200).json({ message: "Customer verified successfully." , type:"Success" });
   } catch (error) {
     console.error("Error:", error);
     res.status(500).json({ error: "Internal Server Error", details: error.message });
@@ -128,7 +130,8 @@ const customerLogin = async (req, res) => {
     if (!customer) {
       return res
         .status(401)
-        .json({ error: "Invalid email/phone number or password" });
+        .json({ message: "Invalid email/phone number or password", 
+          type:"failure"  });
     }
 
     // Compare the provided password with the stored hashed password
@@ -138,7 +141,7 @@ const customerLogin = async (req, res) => {
     if (!passwordMatch) {
       return res
         .status(401)
-        .json({ error: "Invalid email/phone number or password" });
+        .json({ error: "Invalid email/phone number or password", type:"failure" });
     }
 
     // Passwords match, now fetch customer details from Square API
@@ -165,7 +168,7 @@ const customerLogin = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ error: "Internal Server Error", details: error.message });
+      .json({ error: "Internal Server Error", details: error.message ,type:"failure"});
   }
 };
 

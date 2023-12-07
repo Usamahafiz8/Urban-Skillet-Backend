@@ -20,7 +20,7 @@ const createOrderAndProcessPayment = async (req, res) => {
     const idempotency_key = uuidv4();
 
     // Add the source information to the order
-    order.source = { name: "Rapidev" };
+    // order.source = { name: "Rapidev" };
 
     // Create order
     const orderResponse = await SquareBaseURL.post("/orders", {

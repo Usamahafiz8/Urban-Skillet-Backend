@@ -1,7 +1,6 @@
-// orderController.js
-
-const SquareBaseURL = require('../apiConstrains/apiList');
-const { v4: uuidv4 } = require('uuid');
+const SquareBaseURL = require("../apiConstrains/apiList");
+const { v4: uuidv4 } = require("uuid");
+const Order = require("../models/ordersSchema");
 
 const createOrderAndProcessPayment = async (req, res) => {
   try {
@@ -34,20 +33,50 @@ const createOrderAndProcessPayment = async (req, res) => {
       idempotency_key: paymentIdempotencyKey,
       amount_money: {
         amount: amount,
-        currency: 'USD',
+        currency: "USD",
       },
       order_id: orderResponse.data.order.id, // Use the order ID from the order response
     };
 
-    const paymentResponse = await SquareBaseURL.post('/payments', paymentRequest);
+    const paymentResponse = await SquareBaseURL.post(
+      "/payments",
+      paymentRequest
+    );
 
-    // Send the Square API response to the client
+    // Save the order response to the database
+    // Save the order response to the database
+    const savedOrder = await Order.create({
+      orderId: orderResponse.data.order.id,
+      locationId: orderResponse.data.order.location_id,
+      lineItems: orderResponse.data.order.line_items,
+      fulfillments: JSON.stringify(orderResponse.data.order.fulfillments),
+      createdAt: orderResponse.data.order.created_at,
+      updatedAt: orderResponse.data.order.updated_at,
+      state: orderResponse.data.order.state,
+      version: orderResponse.data.order.version,
+      totalTaxMoney: orderResponse.data.order.total_tax_money,
+      totalDiscountMoney: orderResponse.data.order.total_discount_money,
+      totalTipMoney: orderResponse.data.order.total_tip_money,
+      totalMoney: orderResponse.data.order.total_money,
+      totalServiceChargeMoney:
+        orderResponse.data.order.total_service_charge_money,
+      netAmounts: orderResponse.data.order.net_amounts,
+      source: orderResponse.data.order.source,
+      customerId: orderResponse.data.order.customer_id,
+      netAmountDueMoney: orderResponse.data.order.net_amount_due_money,
+    });
+
+    // Send the Square API response, saved order, and payment response to the client
     res.json({
       order: orderResponse.data,
       payment: paymentResponse.data,
+      savedOrder,
     });
   } catch (error) {
-    console.error("Error creating order and processing payment:", error.message);
+    console.error(
+      "Error creating order and processing payment:",
+      error.message
+    );
     if (error.response && error.response.data) {
       console.error("Square API error response:", error.response.data);
       res.status(500).json({ error: "Internal Server Error" });

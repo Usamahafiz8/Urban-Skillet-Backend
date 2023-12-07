@@ -8,13 +8,8 @@ const SquareBaseURL = require("../apiConstrains/apiList");
 
 const createCustomer = async (req, res) => {
   try {
-    const {
-      given_name,
-      family_name,
-      email_address,
-      phone_number,
-      password,
-    } = req.body;
+    const { given_name, family_name, email_address, phone_number, password } =
+      req.body;
 
     // Check if a customer with the provided email or phone number already exists
     const existingCustomer = await Customer.findOne({
@@ -25,7 +20,7 @@ const createCustomer = async (req, res) => {
     if (existingCustomer) {
       return res.status(200).json({
         message: "Customer already exists. Log in instead.",
-        type:"failure"
+        type: "failure",
       });
     }
 
@@ -56,7 +51,7 @@ const createCustomer = async (req, res) => {
 
     res.status(201).json({
       message: "Customer created. Check your email for verification.",
-      type:"Success"
+      type: "Success",
     });
   } catch (error) {
     console.error("Error:", error);
@@ -85,7 +80,9 @@ const verifyCustomer = async (req, res) => {
     });
 
     if (!customer) {
-      return res.status(400).json({ error: "Invalid verification code or email", type:"failure" });
+      return res
+        .status(400)
+        .json({ error: "Invalid verification code or email", type: "failure" });
     }
 
     // Mark the customer as verified
@@ -109,13 +106,16 @@ const verifyCustomer = async (req, res) => {
     customer.customerSquareId = squareCustomerData.id;
     await customer.save();
 
-    res.status(200).json({ message: "Customer verified successfully." , type:"Success" });
+    res
+      .status(200)
+      .json({ message: "Customer verified successfully.", type: "Success" });
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ error: "Internal Server Error", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Internal Server Error", details: error.message });
   }
 };
-
 
 const customerLogin = async (req, res) => {
   try {
@@ -130,8 +130,10 @@ const customerLogin = async (req, res) => {
     if (!customer) {
       return res
         .status(401)
-        .json({ message: "Invalid email/phone number or password", 
-          type:"failure"  });
+        .json({
+          message: "Invalid email/phone number or password",
+          type: "failure",
+        });
     }
 
     // Compare the provided password with the stored hashed password
@@ -141,7 +143,10 @@ const customerLogin = async (req, res) => {
     if (!passwordMatch) {
       return res
         .status(401)
-        .json({ error: "Invalid email/phone number or password", type:"failure" });
+        .json({
+          error: "Invalid email/phone number or password",
+          type: "failure",
+        });
     }
 
     // Passwords match, now fetch customer details from Square API
@@ -168,7 +173,11 @@ const customerLogin = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ error: "Internal Server Error", details: error.message ,type:"failure"});
+      .json({
+        error: "Internal Server Error",
+        details: error.message,
+        type: "failure",
+      });
   }
 };
 

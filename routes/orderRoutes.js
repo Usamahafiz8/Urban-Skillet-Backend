@@ -2,6 +2,26 @@
  * @swagger
  * /orders/create:
  *   post:
+ *     // ... (existing documentation)
+ * /orders/history/{customerId}:
+ *   get:
+ *     summary: Get order history for a specific customer
+ *     parameters:
+ *       - in: path
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Customer ID to fetch order history
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of order history
+ *       500:
+ *         description: Internal server error
+ *
+ * @swagger
+ * /orders/create:
+ *   post:
  *     summary: Create a new order and process payment
  *     requestBody:
  *       required: true
@@ -49,27 +69,6 @@
  *         description: Successful order creation and payment processing
  *       400:
  *         description: Bad request
- *       500:
- *         description: Internal server error
- */
-/**
- * @swagger
- * /orders/create:
- *   post:
- *     // ... (existing documentation)
- * /orders/history/{customerId}:
- *   get:
- *     summary: Get order history for a specific customer
- *     parameters:
- *       - in: path
- *         name: customerId
- *         schema:
- *           type: string
- *         required: true
- *         description: Customer ID to fetch order history
- *     responses:
- *       200:
- *         description: Successful retrieval of order history
  *       500:
  *         description: Internal server error
  */

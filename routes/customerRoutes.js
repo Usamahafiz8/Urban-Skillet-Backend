@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const customerController = require('../controlers/customerControler'); 
+const customerController = require("../controlers/customerControler");
 
 /**
  * @swagger
@@ -116,8 +116,8 @@ const customerController = require('../controlers/customerControler');
  *               error: Internal Server Error
  */
 
-router.post('/create', customerController.createCustomer);
-router.post('/verify', customerController.verifyCustomer);
-router.post('/login', customerController.customerLogin);
+router.post("/create", customerController.createCustomer);
+router.post("/verify", customerController.verifyCustomer);
+router.post("/login", customerController.customerLogin);
 
 module.exports = router;

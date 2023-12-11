@@ -9,7 +9,7 @@ const createOrderAndProcessPayment = async (req, res) => {
       return res.status(400).json({ error: "Request body is missing" });
     }
 
-    const { order, sourceID, amount } = req.body;
+    const { order, sourceID, amount, location_id } = req.body;
 
     // Check if required fields are present in the order
     if (!order || !order.location_id) {
@@ -18,9 +18,6 @@ const createOrderAndProcessPayment = async (req, res) => {
 
     // Generate a random UUID for idempotency_key
     const idempotency_key = uuidv4();
-
-    // Add the source information to the order
-    // order.source = { name: "Rapidev" };
 
     // Create order
     const orderResponse = await SquareBaseURL.post("/orders", {
@@ -38,7 +35,8 @@ const createOrderAndProcessPayment = async (req, res) => {
         amount: amount,
         currency: "USD",
       },
-      order_id: orderResponse.data.order.id, // Use the order ID from the order response
+      order_id: orderResponse.data.order.id,
+      location_id: location_id,
     };
 
     const paymentResponse = await SquareBaseURL.post(

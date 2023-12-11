@@ -18,13 +18,13 @@
  *             example:
  *               - id: '1'
  *                 name: 'Catalog 1'
- * 
+ *
  */
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const CatalogController = require('../controlers/catalogcontroler');
+const CatalogController = require("../controlers/catalogcontroler");
 
 // Define location routes
-router.get('/location/:locationId', CatalogController.filterCatalogsByLocation);
+router.get("/location/:locationId", CatalogController.filterCatalogsByLocation);
 
 module.exports = router;

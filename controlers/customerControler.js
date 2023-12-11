@@ -128,12 +128,10 @@ const customerLogin = async (req, res) => {
 
     // If the customer is not found, return an error
     if (!customer) {
-      return res
-        .status(401)
-        .json({
-          message: "Invalid email/phone number or password",
-          type: "failure",
-        });
+      return res.status(401).json({
+        message: "Invalid email/phone number or password",
+        type: "failure",
+      });
     }
 
     // Compare the provided password with the stored hashed password
@@ -141,14 +139,12 @@ const customerLogin = async (req, res) => {
 
     // If the passwords don't match, return an error
     if (!passwordMatch) {
-      return res
-        .status(401)
-        .json({
-          error: "Invalid email/phone number or password",
-          type: "failure",
-        });
+      return res.status(401).json({
+        error: "Invalid email/phone number or password",
+        type: "failure",
+      });
     }
-
+    console.log("working ");
     // Passwords match, now fetch customer details from Square API
     const squareCustomerResponse = await SquareBaseURL.get(
       `/customers/${customer.customerSquareId}`
@@ -157,10 +153,9 @@ const customerLogin = async (req, res) => {
     // Extract relevant data from the Square API response
     const squareCustomerData = squareCustomerResponse.data.customer;
 
-    // Return the customer details (excluding the password)
+    // Return the customer de tails (excluding the password)
     const customerDetails = {
       id: customer.customerSquareId,
-      createdAt: customer.createdAt,
       updatedAt: customer.updatedAt,
       givenName: squareCustomerData.given_name,
       familyName: squareCustomerData.family_name || "",
@@ -171,13 +166,12 @@ const customerLogin = async (req, res) => {
 
     res.status(200).json(customerDetails);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        error: "Internal Server Error",
-        details: error.message,
-        type: "failure",
-      });
+    console.log("working 1", error.response);
+    res.status(500).json({
+      error: "Internal Server Error",
+      details: error.message,
+      type: "failure",
+    });
   }
 };
 

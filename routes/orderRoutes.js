@@ -42,8 +42,8 @@
  *                     amount: 100
  *                     currency: 'USD'
  *                   scope: 'LINE_ITEM'
- *             sourceID: 'your-source-id'  
- *             amount: 2000  
+ *             sourceID: 'your-source-id'
+ *             amount: 2000
  *     responses:
  *       200:
  *         description: Successful order creation and payment processing
@@ -52,12 +52,33 @@
  *       500:
  *         description: Internal server error
  */
+/**
+ * @swagger
+ * /orders/create:
+ *   post:
+ *     // ... (existing documentation)
+ * /orders/history/{customerId}:
+ *   get:
+ *     summary: Get order history for a specific customer
+ *     parameters:
+ *       - in: path
+ *         name: customerId
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Customer ID to fetch order history
+ *     responses:
+ *       200:
+ *         description: Successful retrieval of order history
+ *       500:
+ *         description: Internal server error
+ */
 
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const ordersController = require('../controlers/orderControler');
+const ordersController = require("../controlers/orderControler");
 
-
-router.post('/create', ordersController.createOrderAndProcessPayment);
+router.post("/create", ordersController.createOrderAndProcessPayment);
+router.get("/history/:customerId", ordersController.getOrderHistory);
 
 module.exports = router;

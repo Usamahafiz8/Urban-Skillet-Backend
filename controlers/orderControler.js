@@ -47,7 +47,6 @@ const createOrderAndProcessPayment = async (req, res) => {
     );
 
     // Save the order response to the database
-    // Save the order response to the database
     const savedOrder = await Order.create({
       orderId: orderResponse.data.order.id,
       locationId: orderResponse.data.order.location_id,
@@ -89,6 +88,21 @@ const createOrderAndProcessPayment = async (req, res) => {
   }
 };
 
+// Add a new controller function for order history
+const getOrderHistory = async (req, res) => {
+  try {
+    const { customerId } = req.params;
+
+    // Fetch orders from the database based on customer ID
+    const orders = await Order.find({ customerId });
+    res.json(orders);
+  } catch (error) {
+    console.error("Error fetching order history:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   createOrderAndProcessPayment,
+  getOrderHistory,
 };

@@ -116,8 +116,41 @@ const customerController = require("../controlers/customerControler");
  *               error: Internal Server Error
  */
 
+/**
+ * @swagger
+ * /customers/createOrUpdate:
+ *   post:
+ *     summary: Create or update a customer without verification and password
+ *     tags: [Customers]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           example:
+ *             given_name: John
+ *             family_name: Doe
+ *             email_address: john.doe@example.com
+ *             phone_number: +1234567890
+ *     responses:
+ *       '201':
+ *         description: Customer created or updated successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Customer created or updated successfully.
+ *               type: success
+ *               customerSquareId: '1234567890'
+ *       '500':
+ *         description: Internal Server Error
+ *         content:
+ *           application/json:
+ *             example:
+ *               error: Internal Server Error
+ */
+
 router.post("/create", customerController.createCustomer);
 router.post("/verify", customerController.verifyCustomer);
 router.post("/login", customerController.customerLogin);
+router.post("/createOrUpdate", customerController.createOrUpdateCustomer);
 
 module.exports = router;

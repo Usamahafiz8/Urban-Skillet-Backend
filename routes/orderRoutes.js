@@ -2,26 +2,6 @@
  * @swagger
  * /orders/create:
  *   post:
- *     // ... (existing documentation)
- * /orders/history/{customerId}:
- *   get:
- *     summary: Get order history for a specific customer
- *     parameters:
- *       - in: path
- *         name: customerId
- *         schema:
- *           type: string
- *         required: true
- *         description: Customer ID to fetch order history
- *     responses:
- *       200:
- *         description: Successful retrieval of order history
- *       500:
- *         description: Internal server error
- *
- * @swagger
- * /orders/create:
- *   post:
  *     summary: Create a new order and process payment
  *     requestBody:
  *       required: true
@@ -61,7 +41,6 @@
  *                   amount_money:
  *                     amount: 100
  *                     currency: 'USD'
- *                   scope: 'LINE_ITEM'
  *             sourceID: 'your-source-id'
  *             amount: 2000
  *     responses:
@@ -71,6 +50,7 @@
  *         description: Bad request
  *       500:
  *         description: Internal server error
+ *
  * @swagger
  * /orders/history/{customerId}:
  *   get:
@@ -87,6 +67,8 @@
  *         description: Successful retrieval of order history
  *       500:
  *         description: Internal server error
+ *
+ * @swagger
  * /orders/createForInHouse:
  *   post:
  *     summary: Create a new in-house order and process payment

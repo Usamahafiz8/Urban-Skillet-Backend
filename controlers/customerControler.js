@@ -175,8 +175,71 @@ const customerLogin = async (req, res) => {
   }
 };
 
+const createOrUpdateCustomer = async (req, res) => {
+  try {
+    const { given_name, family_name, email_address, phone_number } = req.body;
+
+    // Check if a customer with the provided email or phone number already exists
+    const existingCustomer = await Customer.findOne({
+      $or: [{ emailAddress: email_address }, { phoneNumber: phone_number }],
+    });
+
+    // If a customer with the provided email or phone number exists, return Square ID
+    if (existingCustomer) {
+      return res.status(200).json({
+        message: "Customer already exists.",
+        type: "success",
+        customerSquareId: existingCustomer.customerSquareId,
+      });
+    }
+
+    // Create a new customer in the MongoDB database without verification
+    const newCustomer = await Customer.create({
+      givenName: given_name,
+      familyName: family_name || "",
+      emailAddress: email_address,
+      phoneNumber: phone_number,
+      companyName: "",
+    });
+
+    // Now, you can create the customer in the Square app using the customer data
+    const squareApiResponse = await SquareBaseURL.post("/customers", {
+      given_name: newCustomer.givenName,
+      family_name: newCustomer.familyName || "",
+      email_address: newCustomer.emailAddress,
+      phone_number: newCustomer.phoneNumber,
+    });
+
+    // Extract relevant data from the Square API response
+    const squareCustomerData = squareApiResponse.data.customer;
+
+    // Update the customerSquareId in the local database
+    newCustomer.customerSquareId = squareCustomerData.id;
+    await newCustomer.save();
+
+    res.status(201).json({
+      message: "Customer created successfully.",
+      type: "success",
+      customerSquareId: newCustomer.customerSquareId,
+    });
+  } catch (error) {
+    console.error("Error:", error);
+
+    if (error.response) {
+      console.error("Square API Error Response:", error.response.data);
+      res.status(500).json({
+        error: "Internal Server Error",
+        details: error.response.data.errors,
+      });
+    } else {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  }
+};
+
 module.exports = {
   createCustomer,
   verifyCustomer,
   customerLogin,
+  createOrUpdateCustomer,
 };

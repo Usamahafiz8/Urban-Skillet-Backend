@@ -1,6 +1,7 @@
 const SquareBaseURL = require("../apiConstrains/apiList");
 const { v4: uuidv4 } = require("uuid");
 const Order = require("../models/ordersSchema");
+const Customer = require("../models/customerSchema");
 
 const createOrderAndProcessPayment = async (req, res) => {
   try {
@@ -66,6 +67,9 @@ const createOrderAndProcessPayment = async (req, res) => {
       netAmountDueMoney: orderResponse.data.order.net_amount_due_money,
     });
 
+    // Add customerId to the order object
+    orderResponse.data.order.customer_id = savedOrder.customerId;
+
     // Send the Square API response, saved order, and payment response to the client
     res.json({
       order: orderResponse.data,
@@ -100,116 +104,150 @@ const getOrderHistory = async (req, res) => {
   }
 };
 
+// Helper function to create or update a customer in Square
+const createOrUpdateCustomer = async ({
+  givenName, // Include the givenName field
+  email_address,
+  phone_number,
+}) => {
+  const idempotency_key_customer = uuidv4();
+
+  const createCustomerResponse = await SquareBaseURL.post("/customers", {
+    idempotency_key: idempotency_key_customer,
+    givenName: givenName,
+    email_address,
+    phone_number,
+  });
+
+  return createCustomerResponse.data.customer;
+};
+
+// Helper function to check if a customer exists in the database
+const findCustomerInDatabase = async ({ email_address, phone_number }) => {
+  return await Customer.findOne({
+    $or: [{ emailAddress: email_address }, { phoneNumber: phone_number }],
+  });
+};
+
+// Helper function to create a new customer in the database
+const createCustomerInDatabase = async ({
+  customerSquareId,
+  givenName,
+  email_address,
+  phone_number,
+}) => {
+  return await Customer.create({
+    customerSquareId,
+    givenName,
+    emailAddress: email_address,
+    phoneNumber: phone_number,
+  });
+};
+
+// Helper function to retrieve customer information from Square
+
+const findCustomerInSquare = async ({ email_address, phone_number }) => {
+  const squareCustomerResponse = await SquareBaseURL.post("/customers/search", {
+    query: {
+      filter: {
+        email_address: {
+          exact: email_address,
+        },
+        phone_number: {
+          exact: phone_number,
+        },
+      },
+    },
+  });
+
+  return squareCustomerResponse.data.customers &&
+    squareCustomerResponse.data.customers.length > 0
+    ? squareCustomerResponse.data.customers[0]
+    : null;
+};
+
 const createOrderForInHouse = async (req, res) => {
   try {
     if (!req.body) {
       return res.status(400).json({ error: "Request body is missing" });
     }
+    // console.log("Request Body:", req.body);
+    console.dir(req.body, { depth: null });
 
-    const { order, sourceID, amount, location_id } = req.body;
+    const {
+      order,
+      sourceID,
+      amount,
+      location_id,
+      givenName,
+      email_address,
+      phone_number,
+    } = req.body;
 
     if (!order || !order.location_id) {
       return res.status(400).json({ error: "Invalid order data" });
     }
 
-    let customerSquareId;
-
-    // Check if customer_id is provided in the order
-    if (order.customer_id) {
-      // If customer_id is provided, use it directly
-      customerSquareId = order.customer_id;
-    } else {
-      // Check if recipient information is available in the order
-      const { recipient } = order;
-
-      if (!recipient) {
+    // Check if customer_id is missing in the order
+    if (!order.customer_id) {
+      if (!(givenName && email_address && phone_number)) {
         return res.status(400).json({
-          error: "Recipient information is missing in the order",
+          error: "Customer details are missing in the order",
         });
       }
 
-      // Check if a customer with the provided email or phone number already exists in the database
-      const existingCustomer = await Customer.findOne({
-        $or: [
-          { emailAddress: recipient.email_address },
-          { phoneNumber: recipient.phone_number },
-        ],
+      let customerSquareId;
+      // Check if the customer exists in the database
+      const existingCustomer = await findCustomerInDatabase({
+        email_address,
+        phone_number,
       });
 
       if (existingCustomer) {
-        // If customer exists in the database, use the existing customerSquareId
         customerSquareId = existingCustomer.customerSquareId;
       } else {
-        // Customer doesn't exist in the database, check in Square
-        const { given_name, family_name, email_address, phone_number } =
-          recipient;
+        // Check if the customer exists in Square
+        const squareCustomer = await findCustomerInSquare({
+          email_address,
+          phone_number,
+        });
 
-        // Check if customer exists in Square
-        const squareCustomerResponse = await SquareBaseURL.post(
-          "/customers/search",
-          {
-            query: {
-              filter: {
-                email_address: email_address,
-                phone_number: phone_number,
-              },
-            },
-          }
-        );
-
-        if (
-          squareCustomerResponse.data.customers &&
-          squareCustomerResponse.data.customers.length > 0
-        ) {
-          // Customer exists in Square, use the Square customer
-          const squareCustomer = squareCustomerResponse.data.customers[0];
+        if (squareCustomer) {
           customerSquareId = squareCustomer.id;
 
           // Save the customer information into the database
-          const newCustomer = await Customer.create({
-            customerSquareId: squareCustomer.id,
-            given_name,
-            family_name,
-            emailAddress: email_address,
-            phoneNumber: phone_number,
+          await createCustomerInDatabase({
+            customerSquareId,
+            givenName,
+            email_address,
+            phone_number,
+          });
+        } else {
+          // Create a new customer in Square
+          const newSquareCustomer = await createOrUpdateCustomer({
+            givenName,
+            email_address,
+            phone_number,
           });
 
-          customerSquareId = newCustomer.customerSquareId;
-        } else {
-          // Customer doesn't exist in Square, create a new customer in Square
-          const idempotency_key_customer = uuidv4();
-
-          const createCustomerResponse = await SquareBaseURL.post(
-            "/customers",
-            {
-              idempotency_key: idempotency_key_customer,
-              given_name,
-              family_name,
-              email_address,
-              phone_number,
-            }
-          );
+          customerSquareId = newSquareCustomer.id;
 
           // Save the customer information into the database
-          const newCustomer = await Customer.create({
-            customerSquareId: createCustomerResponse.data.customer.id,
-            given_name,
-            family_name,
-            emailAddress: email_address,
-            phoneNumber: phone_number,
+          await createCustomerInDatabase({
+            customerSquareId,
+            givenName,
+            email_address,
+            phone_number,
           });
-
-          customerSquareId = newCustomer.customerSquareId;
         }
       }
+
+      // Add customer_id to the order object
+      order.customer_id = customerSquareId;
     }
 
     const idempotency_key_order = uuidv4();
 
-    // Update order with customerSquareId
-    order.customer_id = customerSquareId;
-
-    // Create order
     const orderResponse = await SquareBaseURL.post("/orders", {
       idempotency_key: idempotency_key_order,
       order,
@@ -253,6 +291,9 @@ const createOrderForInHouse = async (req, res) => {
       customerId: orderResponse.data.order.customer_id,
       netAmountDueMoney: orderResponse.data.order.net_amount_due_money,
     });
+
+    // Add customerId to the order object
+    orderResponse.data.order.customer_id = savedOrder.customerId;
 
     res.json({
       order: orderResponse.data,
